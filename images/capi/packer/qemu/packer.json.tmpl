@@ -77,6 +77,14 @@
       "type": "shell"
     },
     {
+      "environment_vars": [
+        "RKE2_VERSION={{user `rke2_semver`}}"
+      ],
+      "execute_command": "BUILD_NAME={{user `build_name`}}; if [[ \"${BUILD_NAME}\" == *\"rke2\"* ]]; then sudo {{.Vars}} -S -E bash '{{.Path}}'; fi",
+      "script": "./packer/files/rke2/scripts/bootstrap.sh",
+      "type": "shell"
+    },
+    {
       "ansible_env_vars": [
         "ANSIBLE_SSH_ARGS='{{user `existing_ansible_ssh_args`}} {{user `ansible_common_ssh_args`}}'",
         "KUBEVIRT={{user `kubevirt`}}"
@@ -223,6 +231,7 @@
     "output_directory": "./output/{{user `build_name`}}-kube-{{user `kubernetes_semver`}}",
     "python_path": "",
     "qemu_binary": "qemu-system-x86_64",
+    "rke2_semver": null,
     "ssh_password": "$SSH_PASSWORD",
     "ssh_username": "builder",
     "vm_name": "{{user `build_name`}}-kube-{{user `kubernetes_semver`}}",

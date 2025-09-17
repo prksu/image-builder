@@ -295,6 +295,10 @@ COMMON_NODE_VAR_FILES := packer/config/kubernetes.json \
 					packer/config/additional_components.json \
 					packer/config/ecr_credential_provider.json
 
+RKE2_NODE_VAR_FILES := packer/config/ansible-args.json \
+					packer/config/common.json \
+					packer/config/additional_components.json
+
 COMMON_WINDOWS_VAR_FILES :=	packer/config/kubernetes.json \
 					packer/config/windows/kubernetes.json \
 					packer/config/containerd.json \
@@ -327,6 +331,8 @@ COMMON_POWERVS_VAR_FILES := packer/config/kubernetes.json \
 #
 # Any existing values from PACKER_FLAGS take precendence over variable files.
 PACKER_NODE_FLAGS := $(foreach f,$(abspath $(COMMON_NODE_VAR_FILES)),-var-file="$(f)" ) \
+				$(PACKER_FLAGS)
+PACKER_RKE2_NODE_FLAGS := $(foreach f,$(abspath $(RKE2_NODE_VAR_FILES)),-var-file="$(f)" ) \
 				$(PACKER_FLAGS)
 ABSOLUTE_PACKER_VAR_FILES := $(foreach f,$(abspath $(PACKER_VAR_FILES)),-var-file="$(f)" )
 PACKER_WINDOWS_NODE_FLAGS := $(foreach f,$(abspath $(COMMON_WINDOWS_VAR_FILES)),-var-file="$(f)" ) \
@@ -391,6 +397,8 @@ OSC_BUILD_NAMES 			?=	osc-ubuntu-2204 osc-ubuntu-2404
 
 QEMU_BUILD_NAMES			?=	qemu-ubuntu-2204 qemu-ubuntu-2204-cloudimg qemu-ubuntu-2404 qemu-ubuntu-2404-efi qemu-ubuntu-2204-efi qemu-centos-9 qemu-rhel-8 qemu-rhel-9 qemu-rockylinux-8 qemu-rockylinux-8-cloudimg qemu-rockylinux-9 qemu-rockylinux-9-cloudimg qemu-flatcar
 
+QEMU_RKE2_BUILD_NAMES		?=	qemu-ubuntu-2404-rke2
+
 QEMU_KUBEVIRT_BUILD_NAMES	:= $(addprefix kubevirt-,$(QEMU_BUILD_NAMES))
 
 RAW_BUILD_NAMES				?=	raw-ubuntu-2204 raw-ubuntu-2204-efi raw-ubuntu-2404 raw-ubuntu-2404-efi raw-flatcar raw-rhel-8 raw-rhel-9 raw-rhel-9-efi
@@ -439,6 +447,7 @@ HUAWEICLOUD_VALIDATE_TARGETS	:= $(addprefix validate-,$(HUAWEICLOUD_BUILD_NAMES)
 OPENSTACK_VALIDATE_TARGETS := $(addprefix validate-,$(OPENSTACK_BUILD_NAMES))
 QEMU_BUILD_TARGETS	:= $(addprefix build-,$(QEMU_BUILD_NAMES))
 QEMU_VALIDATE_TARGETS	:= $(addprefix validate-,$(QEMU_BUILD_NAMES))
+QEMU_RKE2_BUILD_TARGETS := $(addprefix build-,$(QEMU_RKE2_BUILD_NAMES))
 QEMU_KUBEVIRT_BUILD_TARGETS := $(addprefix build-,$(QEMU_KUBEVIRT_BUILD_NAMES))
 QEMU_KUBEVIRT_VALIDATE_TARGETS := $(addprefix validate-,$(QEMU_KUBEVIRT_BUILD_NAMES))
 RAW_BUILD_TARGETS      := $(addprefix build-,$(RAW_BUILD_NAMES))
@@ -575,6 +584,14 @@ $(QEMU_BUILD_TARGETS): deps-qemu set-ssh-password
 .PHONY: $(QEMU_VALIDATE_TARGETS)
 $(QEMU_VALIDATE_TARGETS): deps-qemu set-ssh-password
 	$(PACKER) validate $(PACKER_NODE_FLAGS) -var-file="$(abspath packer/qemu/$(subst validate-,,$@).json)" $(ABSOLUTE_PACKER_VAR_FILES) packer/qemu/packer.json
+
+.PHONY: $(QEMU_RKE2_BUILD_TARGETS)
+$(QEMU_RKE2_BUILD_TARGETS): deps-qemu set-ssh-password
+	$(PACKER) build $(PACKER_RKE2_NODE_FLAGS) -var-file="$(abspath packer/qemu/$(subst build-,,$@).json)" $(ABSOLUTE_PACKER_VAR_FILES) packer/qemu/packer.json
+
+# .PHONY: $(QEMU_RKE2_VALIDATE_TARGETS)
+# $(QEMU_RKE2_VALIDATE_TARGETS): deps-qemu set-ssh-password
+# 	$(PACKER) validate $(PACKER_NODE_FLAGS) -var-file="$(abspath packer/qemu/$(subst validate-,,$@).json)" $(ABSOLUTE_PACKER_VAR_FILES) packer/qemu/packer.json
 
 .PHONY: $(QEMU_KUBEVIRT_BUILD_TARGETS)
 $(QEMU_KUBEVIRT_BUILD_TARGETS): deps-qemu set-ssh-password
